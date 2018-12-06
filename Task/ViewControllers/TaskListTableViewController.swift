@@ -13,6 +13,7 @@ class TaskListTableViewController: UITableViewController, ButtonTableViewCellDel
 
     override func viewDidLoad() {
         super.viewDidLoad()
+        navigationItem.leftBarButtonItem = editButtonItem
     }
     
     override func viewWillAppear(_ animated: Bool) {
@@ -52,20 +53,14 @@ class TaskListTableViewController: UITableViewController, ButtonTableViewCellDel
         tableView.reloadRows(at: [indexPath], with: .automatic)
     }
 
-    /*
     // Override to support rearranging the table view.
-    override func tableView(_ tableView: UITableView, moveRowAt fromIndexPath: IndexPath, to: IndexPath) {
-
+    override func tableView(_ tableView: UITableView, moveRowAt fromIndexPath: IndexPath, to destinationIndexPath: IndexPath) {
+        let itemToMove = TaskController.shared.tasks[fromIndexPath.row]
+        TaskController.shared.tasks.remove(at: fromIndexPath.row)
+        TaskController.shared.tasks.insert(itemToMove, at: destinationIndexPath.row)
+        TaskController.shared.saveToPersistentStore()
     }
-    */
-
-    /*
-    // Override to support conditional rearranging of the table view.
-    override func tableView(_ tableView: UITableView, canMoveRowAt indexPath: IndexPath) -> Bool {
-        // Return false if you do not want the item to be re-orderable.
-        return true
-    }
-    */
+ 
 
     
     // MARK: - Navigation

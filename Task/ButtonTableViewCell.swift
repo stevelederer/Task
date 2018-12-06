@@ -26,10 +26,15 @@ class ButtonTableViewCell: UITableViewCell {
     }
     
     func updateButton(_ isComplete: Bool) {
+
+        let completeImage = UIImage(named: "complete")?.withRenderingMode(.alwaysTemplate)
+        let incompleteImage = UIImage(named: "incomplete")?.withRenderingMode(.alwaysTemplate)
         if isComplete == true {
-            completeButton.setImage(#imageLiteral(resourceName: "complete"), for: .normal)
+            completeButton.setImage(completeImage, for: .normal)
+            completeButton.tintColor = #colorLiteral(red: 0.4666666687, green: 0.7647058964, blue: 0.2666666806, alpha: 1)
         } else {
-            completeButton.setImage(#imageLiteral(resourceName: "incomplete"), for: .normal)
+            completeButton.setImage(incompleteImage, for: .normal)
+            completeButton.tintColor = #colorLiteral(red: 0.9254902005, green: 0.2352941185, blue: 0.1019607857, alpha: 1)
         }
     }
     
