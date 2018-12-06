@@ -45,14 +45,6 @@ class TaskListTableViewController: UITableViewController, ButtonTableViewCellDel
         }
     }
     
-    // MARK: - ButtomTableViewCellDelegate
-    func buttonCellButtonTapped(_ sender: ButtonTableViewCell) {
-        guard let indexPath = tableView.indexPath(for: sender) else { return }
-        let task = TaskController.shared.tasks[indexPath.row]
-        TaskController.shared.toggleIsCompleteFor(task: task)
-        tableView.reloadRows(at: [indexPath], with: .automatic)
-    }
-
     // Override to support rearranging the table view.
     override func tableView(_ tableView: UITableView, moveRowAt fromIndexPath: IndexPath, to destinationIndexPath: IndexPath) {
         let itemToMove = TaskController.shared.tasks[fromIndexPath.row]
@@ -61,6 +53,13 @@ class TaskListTableViewController: UITableViewController, ButtonTableViewCellDel
         TaskController.shared.saveToPersistentStore()
     }
  
+    // MARK: - ButtomTableViewCellDelegate
+    func buttonCellButtonTapped(_ sender: ButtonTableViewCell) {
+        guard let indexPath = tableView.indexPath(for: sender) else { return }
+        let task = TaskController.shared.tasks[indexPath.row]
+        TaskController.shared.toggleIsCompleteFor(task: task)
+        tableView.reloadRows(at: [indexPath], with: .automatic)
+    }
 
     
     // MARK: - Navigation
