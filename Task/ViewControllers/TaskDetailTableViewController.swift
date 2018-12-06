@@ -9,82 +9,61 @@
 import UIKit
 
 class TaskDetailTableViewController: UITableViewController {
-
+    
+    var task: Task? {
+        didSet {
+            updateViews()
+        }
+    }
+    var dueDateValue: Date?
+    
+    @IBOutlet weak var nameTextField: UITextField!
+    @IBOutlet weak var taskDueTextField: UITextField!
+    @IBOutlet weak var notesTextView: UITextView!
+    @IBOutlet var dueDatePicker: UIDatePicker!
+    
     override func viewDidLoad() {
         super.viewDidLoad()
-
-        // Uncomment the following line to preserve selection between presentations
-        // self.clearsSelectionOnViewWillAppear = false
-
-        // Uncomment the following line to display an Edit button in the navigation bar for this view controller.
-        // self.navigationItem.rightBarButtonItem = self.editButtonItem
+        taskDueTextField.inputView = dueDatePicker
+        let tapGesture = UITapGestureRecognizer(target: self, action: #selector(userTappedView))
+        view.addGestureRecognizer(tapGesture)
+        updateViews()
     }
-
-    // MARK: - Table view data source
-
-    override func numberOfSections(in tableView: UITableView) -> Int {
-        // #warning Incomplete implementation, return the number of sections
-        return 0
+    
+    func updateViews() {
+        guard let task = task, isViewLoaded else { return }
+        title = task.name
+        nameTextField.text = task.name
+        notesTextView.text = task.notes
+        taskDueTextField.text = task.due?.stringValue()
     }
-
-    override func tableView(_ tableView: UITableView, numberOfRowsInSection section: Int) -> Int {
-        // #warning Incomplete implementation, return the number of rows
-        return 0
+    
+    @IBAction func cancelButtonTapped(_ sender: UIBarButtonItem) {
+        self.navigationController?.popViewController(animated: true)
     }
-
-    /*
-    override func tableView(_ tableView: UITableView, cellForRowAt indexPath: IndexPath) -> UITableViewCell {
-        let cell = tableView.dequeueReusableCell(withIdentifier: "reuseIdentifier", for: indexPath)
-
-        // Configure the cell...
-
-        return cell
+    
+    @IBAction func saveButtonTapped(_ sender: UIBarButtonItem) {
+        guard let name = nameTextField.text, let notes = notesTextView.text, let date = dueDateValue else { return }
+        if task == nil {
+            TaskController.shared.add(taskWithName: name, notes: notes, due: date)
+        } else {
+            guard let task = task else { return }
+            TaskController.shared.update(task: task, name: name, notes: notes, due: date)
+        }
+        self.navigationController?.popViewController(animated: true)
     }
-    */
-
-    /*
-    // Override to support conditional editing of the table view.
-    override func tableView(_ tableView: UITableView, canEditRowAt indexPath: IndexPath) -> Bool {
-        // Return false if you do not want the specified item to be editable.
-        return true
+    
+    @IBAction func datePickerValueChanged(_ sender: UIDatePicker) {
+        dueDateValue = dueDatePicker.date
+        taskDueTextField.text = dueDatePicker.date.stringValue()
     }
-    */
-
-    /*
-    // Override to support editing the table view.
-    override func tableView(_ tableView: UITableView, commit editingStyle: UITableViewCellEditingStyle, forRowAt indexPath: IndexPath) {
-        if editingStyle == .delete {
-            // Delete the row from the data source
-            tableView.deleteRows(at: [indexPath], with: .fade)
-        } else if editingStyle == .insert {
-            // Create a new instance of the appropriate class, insert it into the array, and add a new row to the table view
-        }    
+    
+    @objc func userTappedView(_ sender: UITapGestureRecognizer) {
+        nameTextField.resignFirstResponder()
+        taskDueTextField.resignFirstResponder()
+        notesTextView.resignFirstResponder()
     }
-    */
-
-    /*
-    // Override to support rearranging the table view.
-    override func tableView(_ tableView: UITableView, moveRowAt fromIndexPath: IndexPath, to: IndexPath) {
-
-    }
-    */
-
-    /*
-    // Override to support conditional rearranging of the table view.
-    override func tableView(_ tableView: UITableView, canMoveRowAt indexPath: IndexPath) -> Bool {
-        // Return false if you do not want the item to be re-orderable.
-        return true
-    }
-    */
-
-    /*
-    // MARK: - Navigation
-
-    // In a storyboard-based application, you will often want to do a little preparation before navigation
-    override func prepare(for segue: UIStoryboardSegue, sender: Any?) {
-        // Get the new view controller using segue.destination.
-        // Pass the selected object to the new view controller.
-    }
-    */
-
+    
+    
+    
 }
