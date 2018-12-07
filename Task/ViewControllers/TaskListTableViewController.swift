@@ -2,78 +2,105 @@
 //  TaskListTableViewController.swift
 //  Task
 //
-//  Created by Steve Lederer on 12/4/18.
+//  Created by Steve Lederer on 12/6/18.
 //  Copyright © 2018 Steve Lederer. All rights reserved.
 //
 
 import UIKit
+import CoreData
 
 class TaskListTableViewController: UITableViewController, ButtonTableViewCellDelegate {
+   
     
 
+
+
+    // MARK: - View Lifecycle
     override func viewDidLoad() {
         super.viewDidLoad()
-        navigationItem.leftBarButtonItem = editButtonItem
+        TaskController.shared.fetchedResultsController.delegate = self
     }
     
-    override func viewWillAppear(_ animated: Bool) {
-        super.viewWillAppear(animated)
-        tableView.reloadData()
-    }
-    
-
     // MARK: - Table view data source
-    override func tableView(_ tableView: UITableView, numberOfRowsInSection section: Int) -> Int {
-        return TaskController.shared.tasks.count
-    }
-
-    override func tableView(_ tableView: UITableView, cellForRowAt indexPath: IndexPath) -> UITableViewCell {
-        guard let cell = tableView.dequeueReusableCell(withIdentifier: "TaskListCell", for: indexPath) as? ButtonTableViewCell else { fatalError() }
-        let task = TaskController.shared.tasks[indexPath.row]
-        cell.update(withTask: task)
-        cell.delegate = self
-        return cell
-    }
-
     
+    override func numberOfSections(in tableView: UITableView) -> Int {
+        return TaskController.shared.fetchedResultsController.sections?.count ?? 0
+    }
+    
+    override func tableView(_ tableView: UITableView, numberOfRowsInSection section: Int) -> Int {
+        guard let sections = TaskController.shared.fetchedResultsController.sections else { fatalError("No sections in fetchedResultsController")}
+        let sectionInfo = sections[section]
+        return sectionInfo.numberOfObjects
+    }
+    
+    override func tableView(_ tableView: UITableView, cellForRowAt indexPath: IndexPath) -> UITableViewCell {
+        let cell = tableView.dequeueReusableCell(withIdentifier: "TaskListCell", for: indexPath) as? ButtonTableViewCell
+        let task = TaskController.shared.fetchedResultsController.object(at: indexPath)
+        cell?.delegate = self
+        cell?.update(withTask: task)
+        return cell ?? UITableViewCell()
+    }
+    
+    override func tableView(_ tableView: UITableView, titleForHeaderInSection section: Int) -> String? {
+        guard let sectionInfo = TaskController.shared.fetchedResultsController.sections?[section] else { return nil }
+        switch sectionInfo.name {
+        case "0":
+            return "Incomplete"
+        case "1":
+            return "Complete"
+        default:
+            return ""
+        }
+    }
+
     // Override to support editing the table view.
     override func tableView(_ tableView: UITableView, commit editingStyle: UITableViewCell.EditingStyle, forRowAt indexPath: IndexPath) {
         if editingStyle == .delete {
-            let task = TaskController.shared.tasks[indexPath.row]
+            let task = TaskController.shared.fetchedResultsController.object(at: indexPath)
             TaskController.shared.remove(task: task)
-            tableView.deleteRows(at: [indexPath], with: .automatic)
         }
     }
-    
-    // Override to support rearranging the table view.
-    override func tableView(_ tableView: UITableView, moveRowAt fromIndexPath: IndexPath, to destinationIndexPath: IndexPath) {
-        let itemToMove = TaskController.shared.tasks[fromIndexPath.row]
-        TaskController.shared.tasks.remove(at: fromIndexPath.row)
-        TaskController.shared.tasks.insert(itemToMove, at: destinationIndexPath.row)
-        TaskController.shared.saveToPersistentStore()
-    }
- 
-    // MARK: - ButtomTableViewCellDelegate
+
     func buttonCellButtonTapped(_ sender: ButtonTableViewCell) {
         guard let indexPath = tableView.indexPath(for: sender) else { return }
-        let task = TaskController.shared.tasks[indexPath.row]
+        let task = TaskController.shared.fetchedResultsController.object(at: indexPath)
         TaskController.shared.toggleIsCompleteFor(task: task)
-        tableView.reloadRows(at: [indexPath], with: .automatic)
     }
 
-    
+   
     // MARK: - Navigation
     override func prepare(for segue: UIStoryboardSegue, sender: Any?) {
         if segue.identifier == "ToTaskDetailView" {
             guard let indexPath = tableView.indexPathForSelectedRow else { return }
-            let destinationVC = segue.destination as? TaskDetailTableViewController
-            let task = TaskController.shared.tasks[indexPath.row]
-            let due = TaskController.shared.tasks[indexPath.row].due
-            destinationVC?.task = task
-            destinationVC?.dueDateValue = due
+            let destinationVC = segue.destination as! TaskDetailTableViewController
+            guard let task = TaskController.shared.fetchedResultsController.fetchedObjects?[indexPath.row] else { return }
+            destinationVC.task = task
+            destinationVC.dueDateValue = task.due
         }
-    
     }
-    
+}
 
+extension TaskListTableViewController: NSFetchedResultsControllerDelegate {
+    func controllerWillChangeContent(_ controller: NSFetchedResultsController<Task>) {
+        tableView.beginUpdates()
+    }
+    func controllerDidChangeContent(_ controller: NSFetchedResultsController<Task>) {
+        tableView.endUpdates()
+    }
+    func controller(_ controller: NSFetchedResultsController<NSFetchRequestResult>, didChange anObject: Any, at indexPath: IndexPath?, for type: NSFetchedResultsChangeType, newIndexPath: IndexPath?) {
+        switch type {
+        case.delete:
+            guard let indexPath = indexPath else { return }
+            tableView.deleteRows(at: [indexPath], with: .automatic)
+        case.insert:
+            guard let newIndexPath = newIndexPath else { return }
+            tableView.insertRows(at: [newIndexPath], with: .automatic)
+        case.move:
+            guard let oldIndexPath = indexPath, let newIndexPath = newIndexPath else { return }
+            tableView.moveRow(at: oldIndexPath, to: newIndexPath)
+        case.update:
+            guard let indexPath = indexPath else { return }
+            tableView.reloadRows(at: [indexPath], with: .automatic)
+        }
+    }
 }
